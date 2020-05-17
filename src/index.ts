@@ -3,6 +3,12 @@ interface IConfig {
     getInstance: (...arg: any[]) => any;
 }
 
+interface IPoolWorker {
+    start: (fn: Function) => void;
+    release: () => void;
+    clean: () => void;
+}
+
 const sleep = (time: number = 1) => {
     return new Promise((resolve) => {
         setTimeout(() => {
@@ -21,13 +27,18 @@ class ImitatePool {
         this.maxSize = config.maxSize || this.maxSize;
         this.getInstance = config.getInstance;
     }
-    public getWorker = async () => {
+    public getWorker = async (): Promise<IPoolWorker> => {
         const { waitQueue, busyQueue, maxSize, getInstance } = this;
         const releaseKey: unique symbol = Symbol.for("release");
+        const validKey: unique symbol = Symbol.for("valid");
+        const instanceKey: unique symbol = Symbol.for("instance");
         await sleep();
         if (waitQueue.length > 0) {
             let worker = waitQueue.shift();
-            while (!worker[releaseKey] && waitQueue.length > 0) {
+            while (
+                (!worker[releaseKey] || !worker[validKey]) &&
+                waitQueue.length > 0
+            ) {
                 worker = waitQueue.shift();
             }
             worker[releaseKey] = false;
@@ -45,12 +56,17 @@ class ImitatePool {
         const instance = await getInstance();
         const worker = {
             [releaseKey]: false,
+            [validKey]: true,
+            [instanceKey]: instance,
             start: async (fn: any) => {
-                if (!worker[releaseKey]) {
-                    await fn(instance);
-                } else {
-                    throw new Error("实例已被释放");
+                if (worker[releaseKey]) {
+                    console.error("实例已被释放");
+                    return;
                 }
+                if (!worker[validKey]) {
+                    worker[instanceKey] = await getInstance();
+                }
+                await fn(worker[instanceKey]);
             },
             release: () => {
                 if (worker[releaseKey]) {
@@ -58,15 +74,18 @@ class ImitatePool {
                 }
                 worker[releaseKey] = true;
                 const newBusyQueue: any[] = [];
-                for (const item of busyQueue) {
+                for (const item of this.busyQueue) {
                     if (item !== worker) {
                         newBusyQueue.push(item);
                     }
                 }
-                this.waitQueue.push(worker);
                 this.busyQueue = newBusyQueue;
+                this.waitQueue.push(worker);
                 const resolve = this.resolveQueue.shift();
                 resolve && resolve();
+            },
+            clean: () => {
+                worker[validKey] = false;
             },
         };
         this.busyQueue.push(worker);
