@@ -1,20 +1,20 @@
 interface IConfig {
     maxSize?: number;
-    workerClass: any;
+    getInstance: (...arg: any[]) => any;
 }
 
 class ImitatePool {
     private busyQueue: any[] = [];
     private waitQueue: any[] = [];
     private resolveQueue: any[] = [];
-    private workerClass: any;
     private maxSize: number = 100;
+    private getInstance: (...arg: any[]) => any;
     constructor(config: IConfig) {
         this.maxSize = config.maxSize || this.maxSize;
-        this.workerClass = config.workerClass;
+        this.getInstance = config.getInstance;
     }
-    public getWorker = () => {
-        const { waitQueue, busyQueue, maxSize, workerClass } = this;
+    public getWorker = async () => {
+        const { waitQueue, busyQueue, maxSize, getInstance } = this;
         const releaseKey: unique symbol = Symbol.for("release");
         if (waitQueue.length > 0) {
             let worker = waitQueue.shift();
@@ -36,19 +36,18 @@ class ImitatePool {
                 this.resolveQueue.push(resolveFn);
             });
         }
-        const workerInstance = new workerClass();
+        const instance = await getInstance();
         const worker = {
             [releaseKey]: false,
-            start: (...arg) => {
+            start: async (fn: any) => {
                 if (!worker[releaseKey]) {
-                    workerInstance.start.apply(workerInstance, arg);
+                    await fn(instance);
                 } else {
                     throw new Error("实例已被释放");
                 }
             },
-            end: (...arg) => {
-                workerInstance.end &&
-                    workerInstance.end.apply(workerInstance, arg);
+            end: async (fn: any) => {
+                await fn(instance);
                 worker.release();
             },
             release: () => {

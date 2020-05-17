@@ -1,6 +1,6 @@
 {
     "name": "imitate-pool",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "imitate-pool",
     "main": "./lib/imitate-pool.js",
     "types": "./lib/index.d.ts",

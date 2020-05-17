@@ -1,14 +1,14 @@
 interface IConfig {
     maxSize?: number;
-    workerClass: any;
+    getInstance: (...arg: any[]) => any;
 }
 declare class ImitatePool {
     private busyQueue;
     private waitQueue;
     private resolveQueue;
-    private workerClass;
     private maxSize;
+    private getInstance;
     constructor(config: IConfig);
-    getWorker: () => any;
+    getWorker: () => Promise<any>;
 }
 export default ImitatePool;
