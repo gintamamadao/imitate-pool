@@ -3,6 +3,14 @@ interface IConfig {
     getInstance: (...arg: any[]) => any;
 }
 
+const sleep = (time: number = 1) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, time);
+    });
+};
+
 class ImitatePool {
     private busyQueue: any[] = [];
     private waitQueue: any[] = [];
@@ -16,6 +24,7 @@ class ImitatePool {
     public getWorker = async () => {
         const { waitQueue, busyQueue, maxSize, getInstance } = this;
         const releaseKey: unique symbol = Symbol.for("release");
+        await sleep();
         if (waitQueue.length > 0) {
             let worker = waitQueue.shift();
             while (!worker[releaseKey] && waitQueue.length > 0) {
