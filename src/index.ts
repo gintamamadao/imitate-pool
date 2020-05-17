@@ -46,10 +46,6 @@ class ImitatePool {
                     throw new Error("实例已被释放");
                 }
             },
-            end: async (fn: any) => {
-                await fn(instance);
-                worker.release();
-            },
             release: () => {
                 if (worker[releaseKey]) {
                     return;
