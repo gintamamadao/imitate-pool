@@ -25,10 +25,7 @@ class ImitatePool {
             busyQueue.push(worker);
             return worker;
         }
-        if (
-            waitQueue.length + busyQueue.length >= maxSize &&
-            busyQueue.length > 0
-        ) {
+        if (busyQueue.length >= maxSize) {
             return new Promise((resolve) => {
                 const resolveFn = () => {
                     resolve(this.getWorker());
@@ -63,7 +60,7 @@ class ImitatePool {
                 resolve && resolve();
             },
         };
-        busyQueue.push(worker);
+        this.busyQueue.push(worker);
         return worker;
     };
 }
