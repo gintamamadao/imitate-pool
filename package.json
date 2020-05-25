@@ -1,9 +1,12 @@
 {
     "name": "imitate-pool",
-    "version": "1.1.4",
-    "description": "imitate-pool",
+    "version": "1.1.5",
+    "description": "模拟连接池的逻辑",
     "main": "./lib/imitate-pool.js",
     "types": "./lib/index.d.ts",
+    "keywords": [
+        "pool"
+    ],
     "files": [
         "lib/"
     ],
